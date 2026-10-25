@@ -1,0 +1,76 @@
+# ============================================================
+# Git Ignore - 大华 IPC 视图库批量配置工具
+# ============================================================
+
+# --- 敏感数据与用户数据文件 ---
+# 忽略所有包含设备配置、密码或客户真实信息的表格与导出文件
+*.csv
+*.xlsx
+*.xls
+!config_template.csv
+!config_template.xlsx
+
+# 抓包、设备备份与导出的 JSON 数据
+*.backup
+*.dump
+sniff_capture.json
+rpc_config_*.json
+import_results.*
+exported_config.*
+
+# --- Python 缓存与临时文件 ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- 虚拟环境 ---
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# --- 构建与打包产物 (PyInstaller) ---
+build/
+dist/
+*.spec.spec
+*.spec.temp
+error.log
+*.log
+
+# 内部研究与临时工具目录
+.temp/
+temp/
+
+# --- 编辑器与系统文件 ---
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini

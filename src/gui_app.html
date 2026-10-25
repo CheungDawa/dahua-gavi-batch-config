@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>大华视图库批量配置工具</title>
+<style>
+:root{--primary:#1890ff;--success:#52c41a;--error:#ff4d4f;--warn:#faad14;--bg:#f0f2f5;--card:#fff;--border:#d9d9d9;--text:#333;--text2:#666;--radius:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+.container{max-width:900px;margin:20px auto;padding:0 16px}
+h1{font-size:20px;margin-bottom:16px;color:var(--primary)}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab{padding:8px 24px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
+.tab:hover{color:var(--primary)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.card{background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.form-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.form-row>label{min-width:80px;text-align:right;color:var(--text2)}
+.form-row>label.checkbox{text-align:left;min-width:auto}
+.form-row>label.radio{text-align:left;min-width:auto}
+input[type=text],input[type=number],input[type=password]{padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-size:14px;outline:none;transition:.2s}
+input[type=text]:focus,input[type=number]:focus,input[type=password]:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(24,144,255,.15)}
+input[type=text]{width:280px}
+input[type=number]{width:80px}
+input[type=password]{width:200px}
+.btn{padding:6px 18px;border:none;border-radius:4px;cursor:pointer;font-size:14px;transition:.2s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:not(:disabled){background:#40a9ff}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover:not(:disabled){background:#73d13d}
+.btn-secondary{background:#fff;border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:var(--error);color:#fff}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.buttons{display:flex;gap:10px;margin-top:8px}
+.progress-section{margin-top:16px}
+.progress-bar{height:20px;background:#eee;border-radius:10px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);transition:width .3s;border-radius:10px;text-align:center;color:#fff;font-size:12px;line-height:20px;min-width:30px}
+.progress-text{margin-top:6px;color:var(--text2);font-size:13px}
+#log-output{background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:4px;font-family:Consolas,"Courier New",monospace;font-size:12px;height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.log-line{padding:1px 0}
+.log-ok{color:#4ec9b0}
+.log-fail{color:#f44747}
+.log-info{color:#569cd6}
+.log-warn{color:#dcdcaa}
+.summary{display:flex;gap:20px;margin-top:12px;padding:12px;border-radius:4px;font-size:16px;font-weight:600}
+.summary .ok{color:var(--success)}
+.summary .fail{color:var(--error)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{color:var(--text2);font-size:12px;margin-top:4px}
+.result-box{margin-top:12px;padding:12px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap;word-break:break-all}
+.result-ok{background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d}
+.result-err{background:#fff2f0;border:1px solid #ffccc7;color:#cf1322}
+.divider{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>大华 IPC 视图库批量配置工具</h1>
+<div class="tabs">
+<button class="tab active" data-tab="import" onclick="switchTab('import')">批量导入</button>
+<button class="tab" data-tab="export" onclick="switchTab('export')">配置导出</button>
+<button class="tab" data-tab="diag" onclick="switchTab('diag')">设备诊断</button>
+</div>
+
+<!-- ===== 导入页签 ===== -->
+<div id="tab-import" class="tab-content active">
+<div class="card">
+<div class="form-row">
+<label>CSV 文件</label>
+<input type="text" id="csv-file" placeholder="config_template.csv" value="config_template.csv">
+</div>
+<div class="form-row">
+<label>配置引擎</label>
+<label class="radio"><input type="radio" name="engine" value="rpc" checked> RPC API（推荐，~1秒/台）</label>
+<label class="radio"><input type="radio" name="engine" value="playwright"> Playwright UI（兜底，~8秒/台）</label>
+</div>
+<div class="form-row">
+<label>并发数</label>
+<input type="number" id="workers" value="30" min="1" max="100">
+<label>重试次数</label>
+<input type="number" id="retry" value="1" min="1" max="5">
+</div>
+<div class="form-row">
+<label>结果文件</label>
+<input type="text" id="result-file" value="import_results.csv">
+</div>
+<div class="form-row">
+<label>选项</label>
+<label class="checkbox"><input type="checkbox" id="only-failed"> 仅重跑失败项（断点续传）</label>
+<label class="checkbox"><input type="checkbox" id="no-precheck"> 跳过 TCP 预检</label>
+<label class="checkbox"><input type="checkbox" id="dry-run"> 预演（不写入）</label>
+</div>
+<div class="buttons">
+<button class="btn btn-secondary" id="btn-validate" onclick="doValidate()">校验 CSV</button>
+<button class="btn btn-primary" id="btn-import" onclick="doImport()">开始导入</button>
+</div>
+</div>
+<div class="card">
+<div class="progress-section">
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%">0%</div></div>
+<div class="progress-text" id="progress-text">就绪</div>
+</div>
+<div class="summary" id="summary" style="display:none">
+<span class="ok" id="sum-ok">成功: 0</span>
+<span class="fail" id="sum-fail">失败: 0</span>
+<span id="sum-total">总计: 0</span>
+</div>
+<div id="log-output"></div>
+</div>
+</div>
+
+<!-- ===== 导出页签 ===== -->
+<div id="tab-export" class="tab-content">
+<div class="card">
+<div class="form-row"><label>设备 IP</label><input type="text" id="exp-device" placeholder="192.168.1.108"></div>
+<div class="form-row"><label>用户名</label><input type="text" id="exp-user" value="admin"></div>
+<div class="form-row"><label>密码</label><input type="password" id="exp-pass"></div>
+<div class="form-row"><label>输出文件</label><input type="text" id="exp-output" value="exported_config.csv"></div>
+<div class="form-row">
+<label>配置序号</label><input type="number" id="exp-index" value="1" min="1">
+<label>通道</label><input type="number" id="exp-channel" value="0" min="0">
+</div>
+<div class="buttons">
+<button class="btn btn-secondary" id="btn-exp-pw" onclick="exportConfig('playwright')">导出（浏览器）</button>
+<button class="btn btn-primary" id="btn-exp-rpc" onclick="exportConfig('rpc')">导出（API）</button>
+</div>
+<div id="exp-result"></div>
+</div>
+</div>
+
+<!-- ===== 诊断页签 ===== -->
+<div id="tab-diag" class="tab-content">
+<div class="card">
+<h3 style="margin-bottom:12px;color:var(--primary)">测试 RPC2 登录</h3>
+<div class="form-row"><label>设备 IP</label><input type="text" id="diag-device" placeholder="192.168.1.108"></div>
+<div class="form-row"><label>用户名</label><input type="text" id="diag-user" value="admin"></div>
+<div class="form-row"><label>密码</label><input type="password" id="diag-pass"></div>
+<div class="buttons">
+<button class="btn btn-primary" id="btn-login" onclick="testLogin()">测试登录</button>
+<button class="btn btn-secondary" id="btn-probe" onclick="probeConfig()">探测配置节</button>
+</div>
+<div id="diag-result"></div>
+</div>
+</div>
+</div>
+
+<script>
+function switchTab(tab){
+document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+tab));
+}
+function getEngine(){const r=document.querySelector('input[name=engine]:checked');return r?r.value:'rpc';}
+function appendLog(text,cls){
+const el=document.getElementById('log-output');
+const line=document.createElement('div');
+line.className='log-line '+(cls||'');
+line.textContent=text;
+el.appendChild(line);
+el.scrollTop=el.scrollHeight;
+}
+async function api(url,body){
+const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+return resp.json();
+}
+async function doValidate(){
+const csv=document.getElementById('csv-file').value.trim();
+if(!csv){appendLog('请填写 CSV 文件路径','log-warn');return;}
+const btn=document.getElementById('btn-validate');btn.disabled=true;
+appendLog('校验 '+csv+' ...','log-info');
+const r=await api('/api/validate',{csv_file:csv});
+if(r.ok){appendLog('校验通过，共 '+r.count+' 行有效配置','log-ok');}
+else{appendLog('校验失败: '+r.message,'log-fail');}
+btn.disabled=false;
+}
+let importRunning=false;
+async function doImport(){
+if(importRunning){appendLog('导入正在进行中，请等待完成','log-warn');return;}
+const csv=document.getElementById('csv-file').value.trim();
+if(!csv){appendLog('请填写 CSV 文件路径','log-warn');return;}
+const body={
+csv_file:csv,
+engine:getEngine(),
+workers:parseInt(document.getElementById('workers').value)||5,
+retry:parseInt(document.getElementById('retry').value)||1,
+result:document.getElementById('result-file').value.trim()||'import_results.csv',
+only_failed:document.getElementById('only-failed').checked,
+no_precheck:document.getElementById('no-precheck').checked,
+dry_run:document.getElementById('dry-run').checked,
+};
+document.getElementById('log-output').innerHTML='';
+document.getElementById('summary').style.display='none';
+document.getElementById('progress-fill').style.width='0%';
+document.getElementById('progress-text').textContent='启动中...';
+const btn=document.getElementById('btn-import');btn.disabled=true;importRunning=true;
+const r=await api('/api/import',body);
+if(!r.ok){appendLog('启动失败: '+r.message,'log-fail');btn.disabled=false;importRunning=false;return;}
+appendLog(r.message,'log-info');
+pollStatus();
+}
+async function pollStatus(){
+const r=await api('/api/status');
+if(r.logs&&r.logs.length){
+const el=document.getElementById('log-output');
+const current=el.children.length;
+for(let i=current;i<r.logs.length;i++){
+const entry=r.logs[i];
+appendLog(entry.text,entry.cls);
+}
+}
+if(r.total>0){
+const pct=Math.round(r.done/r.total*100);
+document.getElementById('progress-fill').style.width=pct+'%';
+document.getElementById('progress-fill').textContent=pct+'%';
+document.getElementById('progress-text').textContent=
+'进度: '+r.done+'/'+r.total+(r.running?' (运行中...)':' (已完成)');
+}
+if(r.finished){
+document.getElementById('summary').style.display='flex';
+document.getElementById('sum-ok').textContent='成功: '+r.ok;
+document.getElementById('sum-fail').textContent='失败: '+r.fail;
+document.getElementById('sum-total').textContent='总计: '+r.total;
+importRunning=false;
+document.getElementById('btn-import').disabled=false;
+if(r.fail>0){
+appendLog('\n有 '+r.fail+' 台失败，可勾选"仅重跑失败项"后重新导入','log-warn');
+}
+}else{
+setTimeout(pollStatus,500);
+}
+}
+async function exportConfig(engine){
+const body={
+device:document.getElementById('exp-device').value.trim(),
+username:document.getElementById('exp-user').value.trim(),
+password:document.getElementById('exp-pass').value,
+output:document.getElementById('exp-output').value.trim()||'exported_config.csv',
+config_index:parseInt(document.getElementById('exp-index').value)||1,
+channel:parseInt(document.getElementById('exp-channel').value)||0,
+engine:engine,
+};
+const el=document.getElementById('exp-result');el.innerHTML='';
+if(!body.device){el.innerHTML='<div class="result-box result-err">请填写设备 IP</div>';return;}
+const btn=engine==='rpc'?document.getElementById('btn-exp-rpc'):document.getElementById('btn-exp-pw');
+btn.disabled=true;btn.innerHTML='<span class="spinner"></span> 导出中...';
+const r=await api('/api/export',body);
+btn.disabled=false;btn.textContent='导出（'+(engine==='rpc'?'API':'浏览器')+'）';
+if(r.ok){
+el.innerHTML='<div class="result-box result-ok">'+r.message+'</div>';
+if(r.row){
+const row=r.row;
+let html='<div class="result-box result-ok" style="margin-top:8px"><b>导出的配置:</b>\n';
+html+='设备IP: '+row.device_ip+'\n';
+html+='设备编号: '+row.device_id+'\n';
+html+='服务器: '+row.server_ip+':'+row.server_port+'\n';
+html+='通道编号: '+(row.channel_encode||'-')+'\n';
+html+='启用: '+(row.enable==='TRUE'?'是':'否')+'\n';
+html+='采集: 人脸='+(row.collect_face==='TRUE'?'✓':'✗')+' 图片='+(row.collect_image==='TRUE'?'✓':'✗')+' 机动车='+(row.collect_motor==='TRUE'?'✓':'✗')+'</div>';
+el.innerHTML+=html;
+}
+}else{
+el.innerHTML='<div class="result-box result-err">'+r.message+'</div>';
+}
+}
+async function testLogin(){
+const body={
+device:document.getElementById('diag-device').value.trim(),
+username:document.getElementById('diag-user').value.trim(),
+password:document.getElementById('diag-pass').value,
+};
+const el=document.getElementById('diag-result');el.innerHTML='';
+if(!body.device){el.innerHTML='<div class="result-box result-err">请填写设备 IP</div>';return;}
+const btn=document.getElementById('btn-login');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> 测试中...';
+const r=await api('/api/test-login',body);
+btn.disabled=false;btn.textContent='测试登录';
+el.innerHTML='<div class="result-box '+(r.ok?'result-ok':'result-err')+'">'+r.message+'</div>';
+}
+async function probeConfig(){
+const body={
+device:document.getElementById('diag-device').value.trim(),
+username:document.getElementById('diag-user').value.trim(),
+password:document.getElementById('diag-pass').value,
+};
+const el=document.getElementById('diag-result');el.innerHTML='';
+if(!body.device){el.innerHTML='<div class="result-box result-err">请填写设备 IP</div>';return;}
+const btn=document.getElementById('btn-probe');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> 探测中...';
+const r=await api('/api/probe',body);
+btn.disabled=false;btn.textContent='探测配置节';
+if(r.ok&&r.results){
+let html='<div class="result-box result-ok"><b>探测结果:</b>\n\n';
+r.results.forEach(function(item){
+html+='['+(item.ok?'✓ OK':'✗ FAIL')+'] '+item.name;
+if(item.detail) html+='\n  '+item.detail.substring(0,500);
+html+='\n\n';
+});
+html+='</div>';
+el.innerHTML=html;
+}else{
+el.innerHTML='<div class="result-box result-err">'+(r.message||'探测失败')+'</div>';
+}
+}
+</script>
+</body>
+</html>

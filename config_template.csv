@@ -1,0 +1,3 @@
+device_ip,username,password,config_index,enable,server_ip,server_port,keepalive,max_timeout,device_id,user_id,password_viid,reg_interval,platform,channel,channel_encode,collect_face,collect_image,collect_motor,collect_nonmotor,collect_person,collect_file,collect_video
+192.168.1.108,admin,admin123456,1,TRUE,192.168.1.200,14000,60,3,11010100001320000001,admin,admin123456,60,1,0,11010100001310000001,TRUE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE
+192.168.1.109,admin,admin123456,1,TRUE,192.168.1.200,14000,60,3,11010100001320000002,admin,admin123456,60,1,0,11010100001310000002,TRUE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE
