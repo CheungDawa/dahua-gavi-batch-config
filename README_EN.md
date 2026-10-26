@@ -40,7 +40,7 @@ A high-performance batch configuration tool designed for Dahua IP Cameras (Web 5
 
 ```powershell
 # Clone the repository
-git clone https://github.com/your-username/dahua-gavi-batch-config.git
+git clone https://github.com/CheungDawa/dahua-gavi-batch-config.git
 cd dahua-gavi-batch-config
 
 # Install dependencies
