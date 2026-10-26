@@ -5,7 +5,7 @@
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
 [![Standard: GA/T 1400](https://img.shields.io/badge/standard-GA%2FT%201400-orange.svg)]()
 
-专为安防与弱电工程设计的大华 IPC 批量视图库配置工具。通过 CSV / XLSX 模板为海量大华网络摄像机（Web5.0 固件）极速下发**视图库（GAVI / GA/T 1400）**接入参数，支持每台设备唯一的 20 位国标设备编号与通道编码。
+专为安防与弱电工程设计的大华 IPC 批量视图库配置工具。通过 CSV / XLSX 模板为海量大华网络摄像机（Web5.0 固件）极速下发 **视图库（GAVI / GA/T 1400）** 接入参数，支持每台设备唯一的 20 位国标设备编号与通道编码。
 
 ---
 
