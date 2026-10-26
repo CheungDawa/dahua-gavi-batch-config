@@ -39,7 +39,7 @@
 
 ```powershell
 # 1. 克隆仓库
-git clone https://github.com/your-username/dahua-gavi-batch-config.git
+git clone https://github.com/CheungDawa/dahua-gavi-batch-config.git
 cd dahua-gavi-batch-config
 
 # 2. 安装 Python 依赖
